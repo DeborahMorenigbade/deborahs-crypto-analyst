@@ -4,7 +4,6 @@ name: Deborah Crypto Analysis
 on:
   schedule:
     - cron: '17 6 * * *'
-      timezone: 'Europe/Dublin'
   workflow_dispatch:
 
 permissions:
