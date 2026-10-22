@@ -66,7 +66,7 @@ def main() -> int:
             import traceback
             traceback.print_exc()
             failures.append(symbol)
-            print(f"Failed to analyze or deliver {symbol}: {type(exc).__name__}"), file=sys.stderr)
+            print(f"Failed to analyze or deliver {symbol}: {type(exc).__name__}", file=sys.stderr)
                 time.sleep(1)
     if failures:
         print("Some symbols failed: " + ", ".join(failures), file=sys.stderr)
