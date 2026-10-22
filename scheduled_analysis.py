@@ -5,7 +5,12 @@ import time
 from urllib.parse import urlsplit
 
 import requests
-from bot import analyze
+import bot
+from coinbase_data import candles as coinbase_candles
+
+# Replace the data provider only for scheduled runs.
+bot.candles = coinbase_candles
+analyze = bot.analyze
 
 
 def send_message(token: str, chat_id: str, message: str) -> None:
@@ -50,7 +55,7 @@ def main() -> int:
             continue
         try:
             report, _ = analyze(symbol)
-            send_message(token, chat_id, report.replace("**", ""))
+            send_message(token, chat_id, report.replace("**", "").replace("Public Binance SPOT candles", "Coinbase Exchange USD spot candles (USDT proxy)").replace("Binance SPOT data is not Margex perpetual-futures data", "Coinbase USD SPOT data is not USDT perpetual-futures data"))
             print(f"Sent {symbol} analysis to Telegram")
         except requests.exceptions.HTTPError as exc:
             failures.append(symbol)
