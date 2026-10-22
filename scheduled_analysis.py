@@ -61,13 +61,12 @@ def main() -> int:
             report = report.replace("**", "")
             send_message(token, chat_id, report)
             print(f"Sent {symbol} analysis to Telegram.")
-        except Exception as exc:
-            import traceback
-            traceback.print_exc()
-            # Avoid logging raw HTTP request URLs containing the bot token.
-            failures.append(symbol)
-            print(f"Failed to analyze or deliver {symbol}: {type(exc).__name__}", file=sys.stderr)
-        time.sleep(1)
+            except Exception as exc:
+                import traceback
+                traceback.print_exc()
+                failures.append(symbol)
+                print(f"Failed to analyze or deliver {symbol}: {type(exc).__name__}"), file=sys.stderr)
+                time.sleep(1)
     if failures:
         print("Some symbols failed: " + ", ".join(failures), file=sys.stderr)
         return 1
