@@ -10,6 +10,7 @@ from urllib.parse import urlsplit
 import requests
 import bot
 from coinbase_data import candles as coinbase_candles
+from forex_analysis import analyze as analyze_forex, PAIRS as FOREX_PAIRS
 
 bot.candles = coinbase_candles
 
@@ -108,6 +109,30 @@ def main():
             print(f"{symbol}: {type(exc).__name__}", file=sys.stderr)
         time.sleep(1)
 
+    if os.getenv("TWELVE_DATA_API_KEY", "").strip():
+        for pair in FOREX_PAIRS:
+            try:
+                report, status, candle_time = analyze_forex(pair)
+                age = ( __import__('datetime').datetime.now(__import__('datetime').timezone.utc) - candle_time).total_seconds()
+                # Suppress stale Forex reports during market closures or data outages.
+                if age > 7200:
+                    print(f"{pair}: stale 15M data; skipped ({age/3600:.1f} hours old)")
+                    continue
+                send_message(token, chat_id, report)
+                print(f"Sent {pair} Forex report; status={status}")
+                if status.startswith("TRIGGER"):
+                    send_message(token, chat_id, f"🚨 {pair}: {status}\nPrice-only completed-candle breakout (no volume confirmation).\nCheck broker spread and live price before acting.\n\n" + report)
+            except requests.exceptions.HTTPError as exc:
+                failures.append(pair)
+                r = exc.response
+                print(f"{pair}: HTTP error from {urlsplit(r.url).hostname if r is not None else 'unknown'}, status {r.status_code if r is not None else 'unknown'}", file=sys.stderr)
+            except Exception as exc:
+                failures.append(pair)
+                print(f"{pair}: {type(exc).__name__}: {str(exc)[:130]}", file=sys.stderr)
+            time.sleep(9)
+    else:
+        print("Forex disabled: TWELVE_DATA_API_KEY secret not set; crypto remains active")
+
     if failures:
         print("Symbols failed: " + ", ".join(failures), file=sys.stderr)
         return 1
@@ -116,4 +141,3 @@ def main():
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
